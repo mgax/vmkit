@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import subprocess
 import threading
 import code
@@ -38,6 +39,32 @@ class VM:
         self.p.kill()
         self.p.wait()
         print('vm has exited')
+
+class Watcher:
+    def __init__(self, vm, window=1024):
+        self.window = window
+        self.queue = []
+        self.prev = b''
+        vm.stdout_handlers.append(self.incoming)
+
+    def add(self, pattern, callback):
+        self.queue.append((pattern, callback))
+
+    def incoming(self, data):
+        while data:
+            buffer, data = data[:self.window], data[self.window:]
+            buffer = self.prev + buffer
+
+            while self.queue:
+                (pattern, callback) = self.queue[0]
+                m = re.search(pattern, buffer)
+                if not m:
+                    break
+                self.queue.pop(0)
+                callback(m)
+                buffer = buffer[m.end():]
+
+            self.prev = buffer[-self.window:]
 
 def handle_output(vm, output):
     output_file = open(output, 'ab')
