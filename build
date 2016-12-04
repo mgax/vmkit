@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+set -x
+
+cp -a orig serial
+patch -d serial -p1 < console-ttyS0.patch
+
+xorriso_args=(
+  xorriso -as mkisofs
+  -r -J -joliet-long
+  -no-emul-boot
+  -boot-load-size 4
+  -boot-info-table
+  -b isolinux/isolinux.bin
+  -c isolinux/boot.cat
+  -o debian-8.6-serial-install.iso
+  ./serial
+)
+
+"${xorriso_args[@]}"
+
+rm -rf serial

@@ -1,0 +1,40 @@
+diff -U3 -r orig/isolinux/adtxt.cfg serial/isolinux/adtxt.cfg
+--- orig/isolinux/adtxt.cfg	2016-09-17 17:21:51.000000000 +0300
++++ serial/isolinux/adtxt.cfg	2016-12-04 19:17:23.767718208 +0200
+@@ -1,9 +1,9 @@
+ label expert
+ 	menu label ^Expert install
+ 	kernel /install.amd/vmlinuz
+-	append priority=low vga=788 initrd=/install.amd/initrd.gz --- 
++	append priority=low vga=off console=ttyS0,115200n8 initrd=/install.amd/initrd.gz --- console=ttyS0,115200n8 
+ include rqtxt.cfg
+ label auto
+ 	menu label ^Automated install
+ 	kernel /install.amd/vmlinuz
+-	append auto=true priority=critical vga=788 initrd=/install.amd/initrd.gz --- quiet 
++	append auto=true priority=critical vga=off console=ttyS0,115200n8 initrd=/install.amd/initrd.gz --- console=ttyS0,115200n8 
+diff -U3 -r orig/isolinux/isolinux.cfg serial/isolinux/isolinux.cfg
+--- orig/isolinux/isolinux.cfg	2016-09-17 17:21:51.000000000 +0300
++++ serial/isolinux/isolinux.cfg	2016-12-04 18:30:31.645668523 +0200
+@@ -1,7 +1,9 @@
+ # D-I config version 2.0
+ # search path for the c32 support libraries (libcom32, libutil etc.)
++serial 0 115200
++console 0
+ path 
+ include menu.cfg
+-default vesamenu.c32
+-prompt 0
+-timeout 0
++# default vesamenu.c32
++# prompt 0
++# timeout 0
+diff -U3 -r orig/isolinux/txt.cfg serial/isolinux/txt.cfg
+--- orig/isolinux/txt.cfg	2016-09-17 17:21:51.000000000 +0300
++++ serial/isolinux/txt.cfg	2016-12-04 19:17:03.415908766 +0200
+@@ -3,4 +3,4 @@
+ 	menu label ^Install
+ 	menu default
+ 	kernel /install.amd/vmlinuz
+-	append vga=788 initrd=/install.amd/initrd.gz --- quiet 
++	append vga=off console=ttyS0,115200n8 initrd=/install.amd/initrd.gz --- console=ttyS0,115200n8 
