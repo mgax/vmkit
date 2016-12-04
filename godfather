@@ -32,15 +32,22 @@ class VM:
         self.p.stdin.write(data)
         self.p.stdin.flush()
 
-def run(args, output):
+    def kill(self):
+        self.p.kill()
+        self.p.wait()
+        print('vm has exited')
+
+def start_vm(args):
     p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+    return VM(p)
+
+def run(args, output):
+    vm = start_vm(args)
     try:
-        thread(printloop, p.stdout, output)
-        repl(p=p, vm=VM(p))
+        thread(printloop, vm.p.stdout, output)
+        repl(vm=vm)
     finally:
-        print('at exit', p.pid)
-        p.kill()
-        print('exit code:', p.wait())
+        vm.kill()
 
 if __name__ == '__main__':
     import argparse
