@@ -5,6 +5,14 @@ set -x
 cp -a orig serial
 patch -d serial -p1 < console-ttyS0.patch
 
+gunzip serial/install.amd/initrd.gz
+echo "preseed.cfg" | cpio -o -H newc -A -F serial/install.amd/initrd
+gzip serial/install.amd/initrd
+
+cd serial
+md5sum `find -follow -type f` > md5sum.txt
+cd ..
+
 xorriso_args=(
   xorriso -as mkisofs
   -r -J -joliet-long
