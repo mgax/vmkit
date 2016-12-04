@@ -13,9 +13,16 @@ def thread(target, *args, **kwargs):
     t = threading.Thread(target=target, args=args, kwargs=kwargs, daemon=True)
     t.start()
 
-def printloop(f):
-    while True:
-        print(f.read(60))
+def printloop(f, output):
+    if output:
+        with open(output, 'ab') as g:
+            while True:
+                g.write(f.read(1024))
+                g.flush()
+
+    else:
+        while True:
+            print(f.read(60))
 
 class VM:
     def __init__(self, p):
@@ -25,10 +32,10 @@ class VM:
         self.p.stdin.write(data)
         self.p.stdin.flush()
 
-def run(args):
-    p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+def run(args, output):
+    p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
     try:
-        thread(printloop, p.stdout)
+        thread(printloop, p.stdout, output)
         repl(p=p, vm=VM(p))
     finally:
         print('at exit', p.pid)
@@ -36,5 +43,9 @@ def run(args):
         print('exit code:', p.wait())
 
 if __name__ == '__main__':
-    import sys
-    run(sys.argv[1:])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-o', '--output')
+    parser.add_argument('cmd', nargs='+')
+    options = parser.parse_args()
+    run(options.cmd, options.output)
