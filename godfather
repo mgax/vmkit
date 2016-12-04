@@ -17,11 +17,19 @@ def printloop(f):
     while True:
         print(f.read(60))
 
+class VM:
+    def __init__(self, p):
+        self.p = p
+
+    def kbd(self, data):
+        self.p.stdin.write(data)
+        self.p.stdin.flush()
+
 def run(args):
     p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     try:
         thread(printloop, p.stdout)
-        repl(p=p)
+        repl(p=p, vm=VM(p))
     finally:
         print('at exit', p.pid)
         p.kill()
