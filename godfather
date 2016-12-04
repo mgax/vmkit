@@ -14,9 +14,13 @@ def thread(target, *args, **kwargs):
     t.start()
 
 class VM:
-    def __init__(self, p):
-        self.p = p
+    def __init__(self):
         self.stdout_handlers = []
+
+    def start(self, args):
+        self.p = subprocess.Popen(args, stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, bufsize=0)
+        threading.Thread(target=self._stdout_thread, daemon=True).start()
 
     def _stdout_thread(self):
         while True:
@@ -35,20 +39,18 @@ class VM:
         self.p.wait()
         print('vm has exited')
 
-def start_vm(args, output):
-    p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
-    vm = VM(p)
-    if output:
-        output_file = open(output, 'ab')
-        def handle_stdout(data):
-            output_file.write(data)
-            output_file.flush()
+def handle_output(vm, output):
+    output_file = open(output, 'ab')
+    def handle_stdout(data):
+        output_file.write(data)
+        output_file.flush()
     vm.stdout_handlers.append(handle_stdout)
-    threading.Thread(target=vm._stdout_thread, daemon=True).start()
-    return vm
 
 def run(args, output):
-    vm = start_vm(args, output)
+    vm = VM()
+    if output:
+        handle_output(vm, output)
+    vm.start(args)
     try:
         repl(vm=vm)
     finally:
