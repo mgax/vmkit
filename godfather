@@ -43,9 +43,6 @@ def start_vm(args, output):
         def handle_stdout(data):
             output_file.write(data)
             output_file.flush()
-    else:
-        def handle_stdout(data):
-            print(data)
     vm.stdout_handlers.append(handle_stdout)
     threading.Thread(target=vm._stdout_thread, daemon=True).start()
     return vm
