@@ -49,7 +49,7 @@ def patchiso(orig, iso):
           dist,
         ])
 
-def run_qemu(iso):
+def run_qemu(hda, iso):
     from godfather import VM, repl
 
     vm = VM()
@@ -62,6 +62,7 @@ def run_qemu(iso):
     args = [
         'qemu-system-x86_64', '-nographic', '-no-reboot',
         '-enable-kvm', '-m', '256',
+        '-hda', str(hda),
         '-cdrom', str(iso), '-boot', 'd',
     ]
     vm.start(args)
@@ -75,7 +76,7 @@ def install(target, iso):
     target.mkdir()
     hda = target / 'hd.qcow2'
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
-    run_qemu(iso)
+    run_qemu(hda, iso)
 
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
