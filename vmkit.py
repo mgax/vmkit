@@ -49,16 +49,50 @@ def patchiso(orig, iso):
           dist,
         ])
 
+def run_qemu(iso):
+    from godfather import VM, repl
+
+    vm = VM()
+
+    @vm.stdout_handlers.append
+    def handle_stdout(data):
+        sys.stdout.buffer.write(data)
+        sys.stdout.buffer.flush()
+
+    args = [
+        'qemu-system-x86_64', '-nographic', '-no-reboot',
+        '-enable-kvm', '-m', '256',
+        '-cdrom', str(iso), '-boot', 'd',
+    ]
+    vm.start(args)
+
+    try:
+        repl(vm=vm)
+    finally:
+        vm.kill()
+
+def install(target, iso):
+    target.mkdir()
+    hda = target / 'hd.qcow2'
+    run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
+    run_qemu(iso)
+
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
     parser.add_argument('-o', '--output')
     parser.set_defaults(handler=lambda o: patchiso(o.orig, o.output))
+
+def parser_for_install(parser):
+    parser.add_argument('target')
+    parser.add_argument('--iso')
+    parser.set_defaults(handler=lambda o: install(Path(o.target), o.iso))
 
 def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers()
 
     parser_for_patchiso(commands.add_parser('patchiso'))
+    parser_for_install(commands.add_parser('install'))
 
     options = parser.parse_args()
     options.handler(options)
