@@ -18,9 +18,11 @@ class VM:
     def __init__(self):
         self.stdout_handlers = []
 
-    def start(self, args):
-        self.p = subprocess.Popen(args, stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, bufsize=0)
+    def start(self, args, pipe_stdin=False):
+        options = dict(stdout=subprocess.PIPE, bufsize=0)
+        if pipe_stdin:
+            options['stdin'] = subprocess.PIPE
+        self.p = subprocess.Popen(args, **options)
         threading.Thread(target=self._stdout_thread, daemon=True).start()
 
     def _stdout_thread(self):

@@ -49,7 +49,7 @@ def patchiso(orig, iso):
           dist,
         ])
 
-def run_qemu(hda, iso):
+def run_qemu(hda, iso=None):
     from godfather import VM
 
     vm = VM()
@@ -63,8 +63,9 @@ def run_qemu(hda, iso):
         'qemu-system-x86_64', '-nographic', '-no-reboot',
         '-enable-kvm', '-m', '256',
         '-hda', str(hda),
-        '-cdrom', str(iso), '-boot', 'd',
     ]
+    if iso:
+        args += ['-cdrom', str(iso), '-boot', 'd']
     vm.start(args)
     vm.wait()
 
@@ -73,6 +74,9 @@ def install(target, iso):
     hda = target / 'hd.qcow2'
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
     run_qemu(hda, iso)
+
+def run_vm(target):
+    run_qemu(target / 'hd.qcow2')
 
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
@@ -84,12 +88,17 @@ def parser_for_install(parser):
     parser.add_argument('--iso')
     parser.set_defaults(handler=lambda o: install(Path(o.target), o.iso))
 
+def parser_for_run(parser):
+    parser.add_argument('target')
+    parser.set_defaults(handler=lambda o: run_vm(Path(o.target)))
+
 def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers()
 
     parser_for_patchiso(commands.add_parser('patchiso'))
     parser_for_install(commands.add_parser('install'))
+    parser_for_run(commands.add_parser('run'))
 
     options = parser.parse_args()
     options.handler(options)
