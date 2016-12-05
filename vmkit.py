@@ -36,6 +36,8 @@ def patchiso(orig, iso):
             cwd=str(repo), stdin_data=b'preseed.cfg\n')
         run(['gzip', initrd])
 
+        run(['cp', repo / 'finish_install.sh', dist / 'finish_install.sh'])
+
         print('creating ISO image', iso)
         run([
           'xorriso', '-as', 'mkisofs',
