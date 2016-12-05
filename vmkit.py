@@ -50,7 +50,7 @@ def patchiso(orig, iso):
         ])
 
 def run_qemu(hda, iso):
-    from godfather import VM, repl
+    from godfather import VM
 
     vm = VM()
 
@@ -66,11 +66,7 @@ def run_qemu(hda, iso):
         '-cdrom', str(iso), '-boot', 'd',
     ]
     vm.start(args)
-
-    try:
-        repl(vm=vm)
-    finally:
-        vm.kill()
+    vm.wait()
 
 def install(target, iso):
     target.mkdir()

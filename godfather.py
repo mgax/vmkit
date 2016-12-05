@@ -37,6 +37,9 @@ class VM:
 
     def kill(self):
         self.p.kill()
+        return self.wait()
+
+    def wait(self):
         self.p.wait()
         print('vm has exited')
 
