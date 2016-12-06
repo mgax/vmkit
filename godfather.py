@@ -43,7 +43,6 @@ class VM:
 
     def wait(self):
         self.p.wait()
-        print('vm has exited')
 
 class Watcher:
     def __init__(self, vm, window=1024):
