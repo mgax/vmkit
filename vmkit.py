@@ -59,7 +59,7 @@ def echo_stdout(vm):
         sys.stdout.buffer.flush()
 
 @contextmanager
-def qemu(hda, args=[]):
+def qemu(hda, args=[], pipe_stdin=False):
     from godfather import VM
 
     vm = VM()
@@ -69,7 +69,7 @@ def qemu(hda, args=[]):
         '-enable-kvm', '-m', '256',
         '-hda', str(hda),
     ]
-    vm.start(base_args + args)
+    vm.start(base_args + args, pipe_stdin)
 
     try:
         yield vm
@@ -87,6 +87,36 @@ def console(target):
     with qemu(target / 'hd.qcow2') as vm:
         echo_stdout(vm)
 
+def ssh(target, timeout):
+    import random, socket
+    from time import time, sleep
+    port = random.randint(10000, 65000)
+    qemu_args = [
+        '-net', 'nic',
+        '-net', 'user,hostfwd=tcp:127.0.0.1:{}-:22'.format(port),
+    ]
+    with qemu(target / 'hd.qcow2', args=qemu_args, pipe_stdin=True) as vm:
+        t0 = time()
+        while True:
+            if time() - t0 > timeout:
+                vm.kill()
+                raise RuntimeError("waited {} seconds for the port to open"
+                    .format(timeout))
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(('127.0.0.1', port))
+                s.close()
+            except ConnectionRefusedError:
+                sleep(.3)
+            else:
+                break
+        ssh_args = [
+            'ssh', 'localhost', '-p', str(port),
+            '-o', 'UserKnownHostsFile=/dev/null',
+            '-o', 'StrictHostKeyChecking=no',
+        ]
+        subprocess.Popen(ssh_args).wait()
+
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
     parser.add_argument('-o', '--output', required=True)
@@ -101,6 +131,11 @@ def parser_for_console(parser):
     parser.add_argument('--vm', default='.')
     parser.set_defaults(handler=lambda o: console(Path(o.vm)))
 
+def parser_for_ssh(parser):
+    parser.add_argument('--vm', default='.')
+    parser.add_argument('--timeout', default=10)
+    parser.set_defaults(handler=lambda o: ssh(Path(o.vm), o.timeout))
+
 def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers()
@@ -108,6 +143,7 @@ def main():
     parser_for_patchiso(commands.add_parser('patchiso'))
     parser_for_install(commands.add_parser('install'))
     parser_for_console(commands.add_parser('console'))
+    parser_for_ssh(commands.add_parser('ssh'))
 
     options = parser.parse_args()
     handler = getattr(options, 'handler', lambda _: parser.print_help())
