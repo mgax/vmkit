@@ -82,7 +82,7 @@ def console(target):
 
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
-    parser.add_argument('-o', '--output')
+    parser.add_argument('-o', '--output', required=True)
     parser.set_defaults(handler=lambda o: patchiso(o.orig, o.output))
 
 def parser_for_install(parser):
