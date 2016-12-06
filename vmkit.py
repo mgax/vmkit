@@ -52,16 +52,17 @@ def patchiso(orig, iso):
           dist,
         ])
 
+def echo_stdout(vm):
+    @vm.stdout_handlers.append
+    def handle_stdout(data):
+        sys.stdout.buffer.write(data)
+        sys.stdout.buffer.flush()
+
 @contextmanager
 def qemu(hda, iso=None):
     from godfather import VM
 
     vm = VM()
-
-    @vm.stdout_handlers.append
-    def handle_stdout(data):
-        sys.stdout.buffer.write(data)
-        sys.stdout.buffer.flush()
 
     args = [
         'qemu-system-x86_64', '-nographic', '-no-reboot',
@@ -73,7 +74,7 @@ def qemu(hda, iso=None):
     vm.start(args)
 
     try:
-        yield
+        yield vm
     finally:
         vm.wait()
 
@@ -81,12 +82,12 @@ def install(target, iso):
     target.mkdir()
     hda = target / 'hd.qcow2'
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
-    with qemu(hda, iso):
-        pass
+    with qemu(hda, iso) as vm:
+        echo_stdout(vm)
 
 def console(target):
-    with qemu(target / 'hd.qcow2'):
-        pass
+    with qemu(target / 'hd.qcow2') as vm:
+        echo_stdout(vm)
 
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
