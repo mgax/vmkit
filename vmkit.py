@@ -6,6 +6,7 @@ import argparse
 from io import BytesIO
 from tempfile import TemporaryDirectory
 import subprocess
+import threading
 from contextlib import contextmanager
 
 def run(cmdargs, stdin_data=b'', **kwargs):
@@ -52,6 +53,36 @@ def patchiso(orig, iso):
           dist,
         ])
 
+class VM:
+    def __init__(self):
+        self.stdout_handlers = []
+
+    def start(self, args, pipe_stdin=False):
+        options = dict(stdout=subprocess.PIPE, bufsize=0)
+        if pipe_stdin:
+            options['stdin'] = subprocess.PIPE
+        self.p = subprocess.Popen(args, **options)
+        threading.Thread(target=self._stdout_thread, daemon=True).start()
+
+    def _stdout_thread(self):
+        while True:
+            data = self.p.stdout.read(1024)
+            if not data:
+                return
+            for handler in self.stdout_handlers:
+                handler(data)
+
+    def kbd(self, data):
+        self.p.stdin.write(data)
+        self.p.stdin.flush()
+
+    def kill(self):
+        self.p.kill()
+        return self.wait()
+
+    def wait(self):
+        self.p.wait()
+
 def echo_stdout(vm):
     @vm.stdout_handlers.append
     def handle_stdout(data):
@@ -60,17 +91,14 @@ def echo_stdout(vm):
 
 @contextmanager
 def qemu(hda, args=[], pipe_stdin=False):
-    from godfather import VM
-
-    vm = VM()
-
     base_args = [
         'qemu-system-x86_64', '-nographic', '-no-reboot',
         '-enable-kvm', '-m', '256',
         '-hda', str(hda),
     ]
-    vm.start(base_args + args, pipe_stdin)
 
+    vm = VM()
+    vm.start(base_args + args, pipe_stdin)
     try:
         yield vm
     finally:
