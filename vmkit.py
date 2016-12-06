@@ -57,10 +57,6 @@ class VM:
         options = dict(stdin=stdin, stdout=stdout, bufsize=0)
         self.p = subprocess.Popen(args, **options)
 
-    def kbd(self, data):
-        self.p.stdin.write(data)
-        self.p.stdin.flush()
-
     def kill(self):
         self.p.kill()
         return self.wait()
