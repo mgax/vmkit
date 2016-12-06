@@ -77,7 +77,7 @@ def install(target, iso):
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
     run_qemu(hda, iso)
 
-def run_vm(target):
+def console(target):
     run_qemu(target / 'hd.qcow2')
 
 def parser_for_patchiso(parser):
@@ -90,9 +90,9 @@ def parser_for_install(parser):
     parser.add_argument('--iso')
     parser.set_defaults(handler=lambda o: install(Path(o.target), o.iso))
 
-def parser_for_run(parser):
+def parser_for_console(parser):
     parser.add_argument('target')
-    parser.set_defaults(handler=lambda o: run_vm(Path(o.target)))
+    parser.set_defaults(handler=lambda o: console(Path(o.target)))
 
 def main():
     parser = argparse.ArgumentParser()
@@ -100,7 +100,7 @@ def main():
 
     parser_for_patchiso(commands.add_parser('patchiso'))
     parser_for_install(commands.add_parser('install'))
-    parser_for_run(commands.add_parser('run'))
+    parser_for_console(commands.add_parser('console'))
 
     options = parser.parse_args()
     options.handler(options)
