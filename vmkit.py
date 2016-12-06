@@ -6,6 +6,7 @@ import argparse
 from io import BytesIO
 from tempfile import TemporaryDirectory
 import subprocess
+from contextlib import contextmanager
 
 def run(cmdargs, stdin_data=b'', **kwargs):
     kwargs.setdefault('stdin', subprocess.PIPE)
@@ -51,7 +52,8 @@ def patchiso(orig, iso):
           dist,
         ])
 
-def run_qemu(hda, iso=None):
+@contextmanager
+def qemu(hda, iso=None):
     from godfather import VM
 
     vm = VM()
@@ -69,16 +71,22 @@ def run_qemu(hda, iso=None):
     if iso:
         args += ['-cdrom', str(iso), '-boot', 'd']
     vm.start(args)
-    vm.wait()
+
+    try:
+        yield
+    finally:
+        vm.wait()
 
 def install(target, iso):
     target.mkdir()
     hda = target / 'hd.qcow2'
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
-    run_qemu(hda, iso)
+    with qemu(hda, iso):
+        pass
 
 def console(target):
-    run_qemu(target / 'hd.qcow2')
+    with qemu(target / 'hd.qcow2'):
+        pass
 
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
