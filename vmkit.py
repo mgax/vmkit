@@ -91,8 +91,8 @@ def parser_for_install(parser):
     parser.set_defaults(handler=lambda o: install(Path(o.target), o.iso))
 
 def parser_for_console(parser):
-    parser.add_argument('target')
-    parser.set_defaults(handler=lambda o: console(Path(o.target)))
+    parser.add_argument('--vm', default='.')
+    parser.set_defaults(handler=lambda o: console(Path(o.vm)))
 
 def main():
     parser = argparse.ArgumentParser()
