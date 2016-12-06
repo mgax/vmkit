@@ -6,7 +6,6 @@ import argparse
 from io import BytesIO
 from tempfile import TemporaryDirectory
 import subprocess
-import threading
 from contextlib import contextmanager
 
 def run(cmdargs, stdin_data=b'', **kwargs):
@@ -54,22 +53,9 @@ def patchiso(orig, iso):
         ])
 
 class VM:
-    def __init__(self):
-        self.stdout_handlers = []
-
-    def start(self, args, stdin, stdout):
+    def start(self, args, stdin, stdout=subprocess.DEVNULL):
         options = dict(stdin=stdin, stdout=stdout, bufsize=0)
         self.p = subprocess.Popen(args, **options)
-        if stdout:
-            threading.Thread(target=self._stdout_thread, daemon=True).start()
-
-    def _stdout_thread(self):
-        while True:
-            data = self.p.stdout.read(1024)
-            if not data:
-                return
-            for handler in self.stdout_handlers:
-                handler(data)
 
     def kbd(self, data):
         self.p.stdin.write(data)
