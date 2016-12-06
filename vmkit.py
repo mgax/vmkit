@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import sys
 from pathlib import Path
 import argparse
-from io import BytesIO
 from tempfile import TemporaryDirectory
 import subprocess
 from contextlib import contextmanager
