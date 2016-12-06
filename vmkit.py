@@ -59,19 +59,17 @@ def echo_stdout(vm):
         sys.stdout.buffer.flush()
 
 @contextmanager
-def qemu(hda, iso=None):
+def qemu(hda, args=[]):
     from godfather import VM
 
     vm = VM()
 
-    args = [
+    base_args = [
         'qemu-system-x86_64', '-nographic', '-no-reboot',
         '-enable-kvm', '-m', '256',
         '-hda', str(hda),
     ]
-    if iso:
-        args += ['-cdrom', str(iso), '-boot', 'd']
-    vm.start(args)
+    vm.start(base_args + args)
 
     try:
         yield vm
@@ -82,7 +80,7 @@ def install(target, iso):
     target.mkdir()
     hda = target / 'hd.qcow2'
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
-    with qemu(hda, iso) as vm:
+    with qemu(hda, args=['-cdrom', str(iso), '-boot', 'd']) as vm:
         echo_stdout(vm)
 
 def console(target):
