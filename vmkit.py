@@ -57,10 +57,8 @@ class VM:
     def __init__(self):
         self.stdout_handlers = []
 
-    def start(self, args, pipe_stdin=False):
-        options = dict(stdout=subprocess.PIPE, bufsize=0)
-        if pipe_stdin:
-            options['stdin'] = subprocess.PIPE
+    def start(self, args, stdin):
+        options = dict(stdin=stdin, stdout=subprocess.PIPE, bufsize=0)
         self.p = subprocess.Popen(args, **options)
         threading.Thread(target=self._stdout_thread, daemon=True).start()
 
@@ -98,7 +96,7 @@ def qemu(hda, args=[], pipe_stdin=False):
     ]
 
     vm = VM()
-    vm.start(base_args + args, pipe_stdin)
+    vm.start(base_args + args, stdin=subprocess.PIPE if pipe_stdin else None)
     try:
         yield vm
     finally:
