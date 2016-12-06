@@ -57,10 +57,11 @@ class VM:
     def __init__(self):
         self.stdout_handlers = []
 
-    def start(self, args, stdin):
-        options = dict(stdin=stdin, stdout=subprocess.PIPE, bufsize=0)
+    def start(self, args, stdin, stdout):
+        options = dict(stdin=stdin, stdout=stdout, bufsize=0)
         self.p = subprocess.Popen(args, **options)
-        threading.Thread(target=self._stdout_thread, daemon=True).start()
+        if stdout:
+            threading.Thread(target=self._stdout_thread, daemon=True).start()
 
     def _stdout_thread(self):
         while True:
@@ -81,14 +82,8 @@ class VM:
     def wait(self):
         self.p.wait()
 
-def echo_stdout(vm):
-    @vm.stdout_handlers.append
-    def handle_stdout(data):
-        sys.stdout.buffer.write(data)
-        sys.stdout.buffer.flush()
-
 @contextmanager
-def qemu(hda, args=[], pipe_stdin=False):
+def qemu(hda, args=[], pipe_stdin=False, pipe_stdout=False):
     base_args = [
         'qemu-system-x86_64', '-nographic', '-no-reboot',
         '-enable-kvm', '-m', '256',
@@ -96,7 +91,11 @@ def qemu(hda, args=[], pipe_stdin=False):
     ]
 
     vm = VM()
-    vm.start(base_args + args, stdin=subprocess.PIPE if pipe_stdin else None)
+    vm.start(
+        base_args + args,
+        stdin=subprocess.PIPE if pipe_stdin else None,
+        stdout=subprocess.PIPE if pipe_stdout else None,
+    )
     try:
         yield vm
     finally:
@@ -107,11 +106,11 @@ def install(target, iso):
     hda = target / 'hd.qcow2'
     run(['qemu-img', 'create', '-f', 'qcow2', hda, '4G'])
     with qemu(hda, args=['-cdrom', str(iso), '-boot', 'd']) as vm:
-        echo_stdout(vm)
+        pass
 
 def console(target):
     with qemu(target / 'hd.qcow2') as vm:
-        echo_stdout(vm)
+        pass
 
 def ssh(target, timeout):
     import random, socket
@@ -121,7 +120,8 @@ def ssh(target, timeout):
         '-net', 'nic',
         '-net', 'user,hostfwd=tcp:127.0.0.1:{}-:22'.format(port),
     ]
-    with qemu(target / 'hd.qcow2', args=qemu_args, pipe_stdin=True) as vm:
+    hda = target / 'hd.qcow2'
+    with qemu(hda, args=qemu_args, pipe_stdin=True, pipe_stdout=True) as vm:
         t0 = time()
         while True:
             if time() - t0 > timeout:
