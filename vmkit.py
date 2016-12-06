@@ -52,18 +52,6 @@ def patchiso(orig, iso):
           dist,
         ])
 
-class VM:
-    def start(self, args, stdin, stdout=subprocess.DEVNULL):
-        options = dict(stdin=stdin, stdout=stdout, bufsize=0)
-        self.p = subprocess.Popen(args, **options)
-
-    def kill(self):
-        self.p.kill()
-        return self.wait()
-
-    def wait(self):
-        self.p.wait()
-
 @contextmanager
 def qemu(hda, args=[], pipe_stdin=False, pipe_stdout=False):
     base_args = [
@@ -72,11 +60,10 @@ def qemu(hda, args=[], pipe_stdin=False, pipe_stdout=False):
         '-hda', str(hda),
     ]
 
-    vm = VM()
-    vm.start(
+    vm = subprocess.Popen(
         base_args + args,
         stdin=subprocess.PIPE if pipe_stdin else None,
-        stdout=subprocess.PIPE if pipe_stdout else None,
+        stdout=subprocess.DEVNULL if pipe_stdout else None,
     )
     try:
         yield vm
