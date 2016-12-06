@@ -103,7 +103,9 @@ def main():
     parser_for_console(commands.add_parser('console'))
 
     options = parser.parse_args()
-    options.handler(options)
+    handler = getattr(options, 'handler', lambda _: parser.print_help())
+    handler(options)
+
 
 if __name__ == '__main__':
     main()
