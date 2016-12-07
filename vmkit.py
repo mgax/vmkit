@@ -6,6 +6,8 @@ from tempfile import TemporaryDirectory
 import subprocess
 from contextlib import contextmanager
 
+REPO = Path(__file__).resolve().parent
+
 def run(cmdargs, stdin_data=b'', **kwargs):
     kwargs.setdefault('stdin', subprocess.PIPE)
     p = subprocess.Popen([str(a) for a in cmdargs], **kwargs)
@@ -14,15 +16,13 @@ def run(cmdargs, stdin_data=b'', **kwargs):
         raise RuntimeError("Subprocess failed: {!r}".format(cmdargs))
 
 def patchiso(orig, iso):
-    repo = Path(__file__).resolve().parent
-
     with TemporaryDirectory() as tmp:
         dist = Path(tmp) / 'dist'
 
         print('copying contents of', orig, 'to', dist)
         run(['cp', '-a', orig, dist])
 
-        patch_path = repo / 'console-ttyS0.patch'
+        patch_path = REPO / 'console-ttyS0.patch'
         print('applying patch', patch_path)
         with patch_path.open('rb') as patch:
             run(['patch', '-d', dist, '-p1'], stdin=patch)
@@ -32,10 +32,10 @@ def patchiso(orig, iso):
         print('patching', initrd_gz)
         run(['gunzip', initrd_gz])
         run(['cpio', '-o', '-H', 'newc', '-A', '-F', initrd],
-            cwd=str(repo), stdin_data=b'preseed.cfg\n')
+            cwd=str(REPO), stdin_data=b'preseed.cfg\n')
         run(['gzip', initrd])
 
-        run(['cp', repo / 'finish_install.sh', dist / 'finish_install.sh'])
+        run(['cp', REPO / 'finish_install.sh', dist / 'finish_install.sh'])
 
         print('creating ISO image', iso)
         run([
