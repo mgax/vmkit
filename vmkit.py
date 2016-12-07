@@ -106,6 +106,7 @@ def ssh(target, t, extra_args):
                 break
         ssh_args = [
             'ssh', 'root@localhost', '-p', str(port),
+            '-i', str(REPO / 'id_ed25519'),
             '-o', 'UserKnownHostsFile=/dev/null',
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'LogLevel ERROR',
