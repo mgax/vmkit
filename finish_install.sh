@@ -21,3 +21,9 @@ cat > 'usr/local/sbin/run_and_poweroff' <<EOF
 /sbin/poweroff
 EOF
 chmod +x 'usr/local/sbin/run_and_poweroff'
+
+mkdir root/.ssh
+chmod 700 root/.ssh
+cat > root/.ssh/authorized_keys <<EOF
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB85mXqL7CGqAKOuvJt5N1DjEhSq16CBtkC7rrt/3we7 vmkit
+EOF
