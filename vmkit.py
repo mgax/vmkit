@@ -79,7 +79,7 @@ def console(target):
     with qemu(target / 'hd.qcow2') as vm:
         pass
 
-def ssh(target, timeout, extra_args):
+def ssh(target, extra_args):
     import random, socket
     from time import time, sleep
     port = random.randint(10000, 65000)
@@ -90,6 +90,7 @@ def ssh(target, timeout, extra_args):
     hda = target / 'hd.qcow2'
     with qemu(hda, args=qemu_args, pipe_stdin=True, pipe_stdout=True) as vm:
         t0 = time()
+        timeout = 10 # seconds
         while True:
             if time() - t0 > timeout:
                 vm.kill()
@@ -127,9 +128,8 @@ def parser_for_console(parser):
 
 def parser_for_ssh(parser):
     parser.add_argument('--vm', default='.')
-    parser.add_argument('--timeout', default=10)
     parser.add_argument('args', nargs='*')
-    parser.set_defaults(handler=lambda o: ssh(Path(o.vm), o.timeout, o.args))
+    parser.set_defaults(handler=lambda o: ssh(Path(o.vm), o.args))
 
 def main():
     parser = argparse.ArgumentParser()
