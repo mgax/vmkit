@@ -79,7 +79,7 @@ def console(target):
     with qemu(target / 'hd.qcow2') as vm:
         pass
 
-def ssh(target, extra_args):
+def ssh(target, t, extra_args):
     import random, socket
     from time import time, sleep
     port = random.randint(10000, 65000)
@@ -110,7 +110,11 @@ def ssh(target, extra_args):
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'LogLevel ERROR',
         ]
-        subprocess.Popen(ssh_args + extra_args).wait()
+        if t:
+            ssh_args += ['-t']
+        if extra_args:
+            ssh_args += ['/usr/local/sbin/run_and_poweroff'] + extra_args
+        subprocess.Popen(ssh_args).wait()
 
 def parser_for_patchiso(parser):
     parser.add_argument('orig')
@@ -128,8 +132,9 @@ def parser_for_console(parser):
 
 def parser_for_ssh(parser):
     parser.add_argument('--vm', default='.')
+    parser.add_argument('-t', action='store_true')
     parser.add_argument('args', nargs='*')
-    parser.set_defaults(handler=lambda o: ssh(Path(o.vm), o.args))
+    parser.set_defaults(handler=lambda o: ssh(Path(o.vm), o.t, o.args))
 
 def main():
     parser = argparse.ArgumentParser()

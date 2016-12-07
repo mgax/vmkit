@@ -10,3 +10,14 @@ ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
 EOF
 
 echo '/sbin/poweroff' > root/.bash_logout
+
+cat > 'usr/local/sbin/run_and_poweroff' <<EOF
+#!/bin/sh
+
+# execute command
+"$@"
+
+# then poweroff
+/sbin/poweroff
+EOF
+chmod +x 'usr/local/sbin/run_and_poweroff'
