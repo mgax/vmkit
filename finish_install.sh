@@ -15,7 +15,7 @@ cat > 'usr/local/sbin/run_and_poweroff' <<EOF
 #!/bin/sh
 
 # execute command
-"$@"
+"\$@"
 
 # then poweroff
 /sbin/poweroff
