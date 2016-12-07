@@ -133,7 +133,7 @@ def parser_for_console(parser):
 def parser_for_ssh(parser):
     parser.add_argument('--vm', default='.')
     parser.add_argument('-t', action='store_true')
-    parser.add_argument('args', nargs='*')
+    parser.add_argument('args', nargs=argparse.REMAINDER)
     parser.set_defaults(handler=lambda o: ssh(Path(o.vm), o.t, o.args))
 
 def main():
